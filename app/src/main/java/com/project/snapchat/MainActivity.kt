@@ -10,52 +10,42 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
-    var emailId : String?=null
-    var password1 : String?=null
     val mAuth = FirebaseAuth.getInstance()
+    val ref = Firebase.database.reference
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-
-
-
         goButton.setOnClickListener(View.OnClickListener { goButtonClicked() })
-        val currentUser = mAuth.currentUser
-        if(currentUser != null){
-            login()
-        }
+//        val currentUser = mAuth.currentUser
+//        if (currentUser != null) {
+//            login()
+//        }
 
     }
 
-
     fun goButtonClicked() {
-        emailId = email.text.toString()
-        val goButton:Button = findViewById(R.id.goButton)
-        password1= password.text.toString()
-        if(emailId==null || emailId==""|| password==null || password1=="" ||password1==""){
-            Toast.makeText(baseContext, "Please enter email and password",
-                Toast.LENGTH_SHORT).show()
+        if (email.text.toString().isNullOrEmpty() || password.text.toString().isNullOrEmpty()) {
+            Toast.makeText(
+                baseContext, "Please enter email and password",
+                Toast.LENGTH_SHORT
+            ).show()
             return
-        }
-        else {
-            mAuth.signInWithEmailAndPassword(emailId!!, password1!!)
+        } else {
+            mAuth.signInWithEmailAndPassword(email.text.toString()!!, password.text.toString()!!)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
                         login()
                     } else {
-                        Log.w(TAG, "signInWithEmail:failure", task.exception)
-                        Toast.makeText(
-                            baseContext, "Authentication failed due to the reason: "+ task.exception,
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        //add to database
                         signup()
+
                     }
                 }
         }
@@ -63,26 +53,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun signup() {
-        mAuth.createUserWithEmailAndPassword(emailId!!, password1!!)
+        mAuth.createUserWithEmailAndPassword(email.text.toString()!!, password.text.toString()!!)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    // Sign in success, update UI with the signed-in user's information
-                    Log.d(TAG, "createUserWithEmail:success")
-                   login()
+                    ref.child("users").child("userId").setValue(task.result.user!!.uid)
+                    ref.child("users").child("email").setValue(email.text.toString())
+                    login()
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w(TAG, "createUserWithEmail:failure", task.exception)
-                    Toast.makeText(baseContext, "Authentication failed.",
-                        Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        baseContext, task.exception?.localizedMessage,
+                        Toast.LENGTH_SHORT
+                    ).show()
 
                 }
             }
 
     }
 
-    fun login(){
-
-        val intent = Intent(this,SnapActivity::class.java)
+    fun login() {
+        val intent = Intent(this, SnapActivity::class.java)
         startActivity(intent)
     }
 }
