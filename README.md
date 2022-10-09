@@ -1,1 +1,0 @@
-# SnapChat-kotlin
