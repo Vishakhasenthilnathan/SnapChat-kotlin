@@ -15,13 +15,17 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.android.gms.tasks.OnSuccessListener
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
+import com.google.firebase.storage.UploadTask
 import com.google.firebase.storage.ktx.storage
 import kotlinx.android.synthetic.main.activity_create_snap.*
 import java.io.ByteArrayOutputStream
 import java.util.*
+import kotlin.math.log
 
 
 class CreateSnapActivity : AppCompatActivity() {
@@ -46,11 +50,6 @@ class CreateSnapActivity : AppCompatActivity() {
         }
     }
     private fun next() {
-
-
-
-
-
         try {
             snapImage.isDrawingCacheEnabled = true
             snapImage.buildDrawingCache()
@@ -58,12 +57,36 @@ class CreateSnapActivity : AppCompatActivity() {
             val baos = ByteArrayOutputStream()
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
             val data = baos.toByteArray()
-            var uploadTask = FirebaseStorage.getInstance().getReference().child("snapImages").child(ImageName).putBytes(data)
-            uploadTask.addOnFailureListener {
-                Toast.makeText(this,"Upload Failed",Toast.LENGTH_SHORT).show()
-            }.addOnSuccessListener { taskSnapshot ->
-                Toast.makeText(this,"Upload Success",Toast.LENGTH_SHORT).show()
+            val uploadTask = FirebaseStorage.getInstance().getReference().child("snapImages").child(ImageName).putBytes(data)
+            uploadTask.addOnFailureListener(OnFailureListener {
+                // Handle unsuccessful uploads
+                Toast.makeText(this,"UploadFailed",Toast.LENGTH_SHORT).show()
+            }).addOnSuccessListener(OnSuccessListener<UploadTask.TaskSnapshot> { taskSnapshot ->
+                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
 
+            })
+
+            uploadTask.continueWithTask { task ->
+                if (!task.isSuccessful) {
+                    task.exception?.let {
+                        throw it
+                    }
+                }
+                FirebaseStorage.getInstance().getReference().child("snapImages")
+                    .child(ImageName).downloadUrl
+            }.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val downloadUri = task.result
+                    Log.i("uri on complete", downloadUri.toString())
+                    val intent = Intent(this, ChooseUserActivity::class.java)
+                    intent.putExtra("imageURL",downloadUri.toString())
+                    intent.putExtra("imageName",ImageName)
+                    intent.putExtra("message",snapMessageText?.text.toString())
+                    startActivity(intent)
+                } else {
+                    // Handle failures
+                    // ...
+                }
             }
 
         }

@@ -24,10 +24,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         goButton.setOnClickListener(View.OnClickListener { goButtonClicked() })
-//        val currentUser = mAuth.currentUser
-//        if (currentUser != null) {
-//            login()
-//        }
+        val currentUser = mAuth.currentUser
+        if (currentUser != null) {
+            login()
+        }
 
     }
 
@@ -45,19 +45,16 @@ class MainActivity : AppCompatActivity() {
                         login()
                     } else {
                         signup()
-
                     }
                 }
         }
-
     }
 
     private fun signup() {
         mAuth.createUserWithEmailAndPassword(email.text.toString()!!, password.text.toString()!!)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    ref.child("users").child("userId").setValue(task.result.user!!.uid)
-                    ref.child("users").child("email").setValue(email.text.toString())
+                    FirebaseDatabase.getInstance().getReference().child("users").child(task.result.user!!.uid).child("email").setValue(email?.text.toString())
                     login()
                 } else {
                     // If sign in fails, display a message to the user.
