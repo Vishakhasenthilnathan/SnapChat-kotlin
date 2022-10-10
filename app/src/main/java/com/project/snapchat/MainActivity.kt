@@ -22,23 +22,22 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        //login or signup
         goButton.setOnClickListener(View.OnClickListener { goButtonClicked() })
+
         val currentUser = mAuth.currentUser
         if (currentUser != null) {
             login()
         }
-
     }
 
     fun goButtonClicked() {
-        if (email.text.toString().isNullOrEmpty() || password.text.toString().isNullOrEmpty()) {
-            Toast.makeText(
-                baseContext, "Please enter email and password",
-                Toast.LENGTH_SHORT
-            ).show()
-            return
-        } else {
-            mAuth.signInWithEmailAndPassword(email.text.toString()!!, password.text.toString()!!)
+        if (email.text.toString().isEmpty() || password.text.toString().isEmpty()) {
+            Toast.makeText(baseContext, "Please enter email and password", Toast.LENGTH_SHORT).show()
+        }
+        else {
+            //First try to signip with the credentials provided if fails, create a new user with the provided credentials
+            mAuth.signInWithEmailAndPassword(email.text.toString(), password.text.toString())
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
                         login()
@@ -50,19 +49,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun signup() {
-        mAuth.createUserWithEmailAndPassword(email.text.toString()!!, password.text.toString()!!)
+        mAuth.createUserWithEmailAndPassword(email.text.toString(), password.text.toString())
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    FirebaseDatabase.getInstance().getReference().child("users").child(task.result.user!!.uid).child("email").setValue(email?.text.toString())
+                    //if signup is successful, add the user details to Firebase database -> users->userid-->email : value
+                    FirebaseDatabase.getInstance().reference.child("users").child(task.result.user!!.uid).child("email").setValue(email?.text.toString())
                     login()
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w(TAG, "createUserWithEmail:failure", task.exception)
-                    Toast.makeText(
-                        baseContext, task.exception?.localizedMessage,
-                        Toast.LENGTH_SHORT
-                    ).show()
-
+                    Toast.makeText(baseContext, task.exception?.localizedMessage, Toast.LENGTH_SHORT).show()
                 }
             }
 

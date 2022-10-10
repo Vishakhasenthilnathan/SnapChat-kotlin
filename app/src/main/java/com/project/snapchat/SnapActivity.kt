@@ -24,9 +24,12 @@ class SnapActivity : AppCompatActivity() {
 
         val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1 , emails)
         snapListView?.adapter = adapter
-        FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.currentUser!!.uid).child("snaps").addChildEventListener(object :
+
+        //get the snaps object from the database by navigating through users->uid -->snaps
+        FirebaseDatabase.getInstance().reference.child("users").child(mAuth.currentUser!!.uid).child("snaps").addChildEventListener(object :
             ChildEventListener {
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                //add the retrieved emails to the email list to display in adapter
                 emails.add(snapshot.child("from").value as String)
                 adapter.notifyDataSetChanged()
             }
