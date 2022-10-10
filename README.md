@@ -7,4 +7,4 @@ Developed a simple snapchat clone app using Kotlin using Firebase  - Authenticat
 4. View snap received from users 
 5. delete the snaps once seen
 
-<img src="https://github.com/Vishakhasenthilnathan/SnapChat-kotlin/blob/main/snapchat.gif" width="200" height="450">
+<img src="https://github.com/Vishakhasenthilnathan/SnapChat-kotlin/blob/main/snapchat.gif" width="210" height="450">
