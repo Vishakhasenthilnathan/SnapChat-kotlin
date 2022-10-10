@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.ChildEventListener
@@ -12,11 +13,13 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.android.synthetic.main.activity_choose_user.*
+import kotlinx.android.synthetic.main.activity_create_snap.*
 import kotlinx.android.synthetic.main.activity_snap.*
 
 class SnapActivity : AppCompatActivity() {
-    val mAuth = FirebaseAuth.getInstance()
+    private val mAuth = FirebaseAuth.getInstance()
     var emails : ArrayList<String> = ArrayList()
+    var snapShotList: ArrayList<DataSnapshot> = ArrayList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,15 +34,35 @@ class SnapActivity : AppCompatActivity() {
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
                 //add the retrieved emails to the email list to display in adapter
                 emails.add(snapshot.child("from").value as String)
+                snapShotList.add(snapshot)
                 adapter.notifyDataSetChanged()
             }
-
+            override fun onChildRemoved(snapshot: DataSnapshot) {
+                var index=0
+                for (snap: DataSnapshot in snapShotList){
+                    if(snap.key==snapshot.key){
+                        snapShotList.removeAt(index)
+                        emails.removeAt(index)
+                    }
+                    index++
+                }
+                adapter.notifyDataSetChanged()
+            }
             override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
-            override fun onChildRemoved(snapshot: DataSnapshot) {}
             override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
             override fun onCancelled(error: DatabaseError) {}
+
         })
 
+        snapListView.onItemClickListener = AdapterView.OnItemClickListener { adapterView, view, i, l ->
+            var snapshot = snapShotList.get(i)
+            val intent = Intent(this,ViewSnapsActivity::class.java)
+            intent.putExtra("imageURL",snapshot.child("imageUrl").value as String)
+            intent.putExtra("imageName",snapshot.child("imageName").value as String)
+            intent.putExtra("message",snapshot.child("message").value as String)
+            intent.putExtra("snapKey",snapshot.key as String)
+            startActivity(intent)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
